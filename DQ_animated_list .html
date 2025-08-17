@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="C:\Users\UsEr\Downloads\List\Logo.png">
+  <meta charset="UTF-8">
+  <title>Animated List Operations</title>
+  <style>
+    #members-box {
+  margin-top: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px 20px;
+  border-radius: 10px;
+  width: 300px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  text-align: left;
+}
+
+#members-box h3 {
+  margin-bottom: 10px;
+  color: #ffeb3b;
+  text-align: center;
+}
+
+#members-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#members-list li {
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-weight: bold;
+}
+
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 40px;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
+      color: #fff;
+    }
+    #list {
+      display: flex;
+      border: 2px solid #333;
+      padding: 10px;
+      min-width: 500px;
+      height: 60px;
+      position: relative;
+      background: rgb(238, 237, 159);
+      border-radius: 8px;
+      user-select: none; /* ป้องกันข้อความถูกเลือกเวลา drag */
+    }
+    .item {
+      width: 50px;
+      height: 40px;
+      line-height: 40px;
+      text-align: center;
+      border: 1px solid #555;
+      margin: 0 5px;
+      background: #eef;
+      transition: transform 0.4s ease, opacity 0.4s, background 0.4s;
+      position: relative;
+      border-radius: 4px;
+      color: #000;
+      font-weight: bold;
+      cursor: grab;
+    }
+    .item.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+    .item.over {
+      border: 2px dashed #007BFF;
+    }
+    #controls {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      transition: background-color 0.3s ease;
+    }
+    .append-btn  { background-color: #4CAF50; } 
+    .insert-btn  { background-color: #2196F3; } 
+    .remove-btn  { background-color: #f44336; } 
+    .pop-btn     { background-color: #ff9800; } 
+    .clear-btn    { background-color: #d80af3; }
+    .Add   { background-color: #09defa; }
+  </style>
+</head>
+<body>
+  <h2>Animated List Operations</h2>
+  <div id="list"></div>
+  <div id="controls">
+    <button class="append-btn" onclick="appendItem()">append()</button>
+    <button class="insert-btn" onclick="insertItem()">insert(pos, val)</button>
+    <button class="remove-btn" onclick="removeItem()">remove(val)</button>
+    <button class="pop-btn" onclick="popItem()">pop()</button>
+    <button class="clear-btn" onclick="clearList()">Clear List</button>
+    <button class="Add" onclick="Add()">Add()</button>
+  </div>
+
+  <script>
+    let counter = 1;
+    const listEl = document.getElementById('list');
+    let dragSrcEl = null;  // ตัวเก็บ node ที่กำลังถูกลาก
+
+    function createNode(val) {
+      const node = document.createElement('div');
+      node.className = 'item';
+      node.textContent = val;
+      node.setAttribute('draggable', 'true');  // เปิดใช้ drag
+      addDragAndDropHandlers(node); // เพิ่ม event handler สำหรับ drag and drop
+      return node;
+    }
+
+    // --- ฟังก์ชันเพิ่ม ลบ แก้ไข list ---
+    function appendItem() {
+      const val = prompt("Enter value to append:", counter);
+      if (val === null) return;
+      const node = createNode(val);
+      node.style.opacity = 0;
+      node.style.background = "#4CAF50";
+      listEl.appendChild(node);
+      requestAnimationFrame(() => node.style.opacity = 1);
+      counter++;
+    }
+
+    function insertItem() {
+      const pos = parseInt(prompt("Insert position (0-based):", 0));
+      const val = prompt("Value to insert:", counter);
+      if (isNaN(pos) || val === null) return;
+      const node = createNode(val);
+      node.style.opacity = 0;
+      node.style.background = "#2196F3";
+      const children = listEl.children;
+      if (pos >= children.length) {
+        listEl.appendChild(node);
+      } else {
+        listEl.insertBefore(node, children[pos]);
+      }
+      requestAnimationFrame(() => node.style.opacity = 1);
+      counter++;
+    }
+
+    function removeItem() {
+      const val = prompt("Value to remove from list:");
+      if (val === null) return;
+      const children = Array.from(listEl.children);
+      const target = children.find(c => c.textContent === val);
+      if (!target) {
+        alert("Value not found");
+        return;
+      }
+      target.style.background = "#f44336";
+      target.style.opacity = 0;
+      target.addEventListener('transitionend', () => {
+        listEl.removeChild(target);
+      }, { once: true });
+    }
+
+    function popItem() {
+      const children = listEl.children;
+      if (!children.length) {
+        alert("List is empty");
+        return;
+      }
+      const last = children[children.length - 1];
+      last.style.background = "#ff9800";
+      last.style.opacity = 0;
+      last.addEventListener('transitionend', () => {
+        listEl.removeChild(last);
+      }, { once: true });
+    }
+
+    function clearList() {
+      const children = Array.from(listEl.children);
+      children.forEach(child => {
+        child.style.background = "#9e9e9e";
+        child.style.opacity = 0;
+        child.addEventListener('transitionend', () => {
+          if (child.parentNode) {
+            listEl.removeChild(child);
+          }
+        }, { once: true });
+      });
+    }
+
+    function Add() {
+      for (let i = 0; i < 3; i++) {
+        const val = counter++;
+        const node = createNode(val);
+        node.style.opacity = 0;
+        node.style.background = "#09defa";
+        listEl.appendChild(node);
+        requestAnimationFrame(() => node.style.opacity = 1);
+      }
+    }
+    function handleDragStart(e) {
+      dragSrcEl = this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this.textContent);
+    }
+
+    function handleDragOver(e) {
+      if (e.preventDefault) e.preventDefault(); 
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+
+    function handleDragEnter(e) {
+      if (this !== dragSrcEl) {
+        this.classList.add('over');
+      }
+    }
+
+    function handleDragLeave(e) {
+      this.classList.remove('over');
+    }
+
+    function handleDrop(e) {
+      if (e.stopPropagation) e.stopPropagation(); 
+      if (dragSrcEl !== this) {
+        const nodes = Array.from(listEl.children);
+        const dragIndex = nodes.indexOf(dragSrcEl);
+        const dropIndex = nodes.indexOf(this);
+        if (dragIndex < dropIndex) {
+          listEl.insertBefore(dragSrcEl, this.nextSibling);
+        } else {
+          listEl.insertBefore(dragSrcEl, this);
+        }
+      }
+      this.classList.remove('over');
+      return false;
+    }
+
+    function handleDragEnd(e) {
+      this.classList.remove('dragging');
+      const items = listEl.querySelectorAll('.item');
+      items.forEach(item => item.classList.remove('over'));
+    }
+
+    function addDragAndDropHandlers(node) {
+      node.addEventListener('dragstart', handleDragStart, false);
+      node.addEventListener('dragenter', handleDragEnter, false);
+      node.addEventListener('dragover', handleDragOver, false);
+      node.addEventListener('dragleave', handleDragLeave, false);
+      node.addEventListener('drop', handleDrop, false);
+      node.addEventListener('dragend', handleDragEnd, false);
+    }
+    document.querySelectorAll('.item').forEach(addDragAndDropHandlers);
+  </script>
+  <div id="members-box">
+  <h3>Members</h3>
+  <ul id="members-list">
+    <li>นฤพล 6652100487</li>
+    <li>ภูมิพิพัฒน์ 6652100525</li>
+    <li>ปภพ 6652101131</li>
+    <li>พรพระพรหม 6652100827</li>
+    <li>ชยพัทธ์ 6652101114</li>
+  </ul>
+</div>
+
+</body>
+</html>
